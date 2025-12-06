@@ -5,11 +5,6 @@ namespace VirtualEventTicketing.Models
 {
     public class ApplicationUser : IdentityUser
     {
-        [Required]
-        [StringLength(200)]
-        [Display(Name = "Full Name")]
-        public string FullName { get; set; } = string.Empty;
-
         [Display(Name = "Phone Number")]
         [StringLength(20)]
         public string? PhoneNumber { get; set; }

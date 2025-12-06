@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+ using Microsoft.Extensions.Logging;
 using VirtualEventTicketing.Data;
 using VirtualEventTicketing.Models;
 
@@ -30,7 +31,6 @@ namespace VirtualEventTicketing.Data.Seeders
                 {
                     UserName = "admin@example.com",
                     Email = "admin@example.com",
-                    FullName = "System Admin",
                     EmailConfirmed = true,
                     DateOfBirth = DateTime.UtcNow
                 };
@@ -111,6 +111,88 @@ namespace VirtualEventTicketing.Data.Seeders
 
                 context.Events.AddRange(events);
                 await context.SaveChangesAsync();
+            }
+        }
+
+        // Method to delete all attendee users (but preserve admin users)
+        public static async Task<int> DeleteAttendeeUsersAsync(IServiceProvider serviceProvider)
+        {
+            var context = serviceProvider.GetRequiredService<ApplicationDbContext>();
+            var userManager = serviceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+            var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
+            var logger = loggerFactory.CreateLogger("DatabaseSeeder");
+
+            // Get all users
+            var allUsers = userManager.Users.ToList();
+            var usersToDelete = new List<ApplicationUser>();
+
+            // Find all users who have Attendee role but NOT Admin role
+            foreach (var user in allUsers)
+            {
+                var roles = await userManager.GetRolesAsync(user);
+                
+                // Delete user if they have Attendee role but NOT Admin role
+                if (roles.Contains("Attendee") && !roles.Contains("Admin"))
+                {
+                    usersToDelete.Add(user);
+                }
+            }
+
+            // Delete the attendee users
+            int deletedCount = 0;
+            foreach (var user in usersToDelete)
+            {
+                var result = await userManager.DeleteAsync(user);
+                if (result.Succeeded)
+                {
+                    logger.LogInformation("Deleted attendee user: {Email}", user.Email);
+                    deletedCount++;
+                }
+                else
+                {
+                    logger.LogWarning("Failed to delete user {Email}: {Errors}", 
+                        user.Email, string.Join(", ", result.Errors.Select(e => e.Description)));
+                }
+            }
+
+            logger.LogInformation("Deleted {Count} attendee user(s). Admin users were preserved.", deletedCount);
+            return deletedCount;
+        }
+
+        // Method to delete a specific user by email (but preserve admin users)
+        public static async Task<bool> DeleteUserByEmailAsync(IServiceProvider serviceProvider, string email)
+        {
+            var userManager = serviceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+            var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
+            var logger = loggerFactory.CreateLogger("DatabaseSeeder");
+
+            var user = await userManager.FindByEmailAsync(email);
+            if (user == null)
+            {
+                logger.LogWarning("User with email {Email} not found", email);
+                return false;
+            }
+
+            // Check if user has Admin role - don't delete admins
+            var roles = await userManager.GetRolesAsync(user);
+            if (roles.Contains("Admin"))
+            {
+                logger.LogWarning("Cannot delete user {Email} - user has Admin role", email);
+                return false;
+            }
+
+            // Delete the user
+            var result = await userManager.DeleteAsync(user);
+            if (result.Succeeded)
+            {
+                logger.LogInformation("Deleted user: {Email}", email);
+                return true;
+            }
+            else
+            {
+                logger.LogWarning("Failed to delete user {Email}: {Errors}", 
+                    email, string.Join(", ", result.Errors.Select(e => e.Description)));
+                return false;
             }
         }
     }

@@ -8,11 +8,20 @@
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1>Manage Users</h1>
+        <form asp-action="DeleteAttendeeUsers" method="post" onsubmit="return confirm('Are you sure you want to delete ALL attendee users? This action cannot be undone. Admin users will be preserved.');">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn btn-danger">Delete All Attendee Users</button>
+        </form>
     </div>
 
     @if (TempData["Success"] != null)
     {
         <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
     }
 
     <div class="card shadow-sm">
@@ -21,7 +30,6 @@
                 <thead>
                     <tr>
                         <th>Email</th>
-                        <th>Full Name</th>
                         <th>Roles</th>
                         <th>Actions</th>
                     </tr>
@@ -31,7 +39,6 @@
                     {
                         <tr>
                             <td>@user.Email</td>
-                            <td>@user.FullName</td>
                             <td>
                                 @if (userRoles.ContainsKey(user.Id) && userRoles[user.Id].Any())
                                 {
@@ -47,6 +54,14 @@
                             </td>
                             <td>
                                 <a asp-action="EditUserRoles" asp-route-id="@user.Id" class="btn btn-sm btn-primary">Edit Roles</a>
+                                @if (!userRoles.ContainsKey(user.Id) || !userRoles[user.Id].Contains("Admin"))
+                                {
+                                    <form asp-action="DeleteUserByEmail" method="post" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete user @user.Email? This action cannot be undone.');">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="email" value="@user.Email" />
+                                        <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                                    </form>
+                                }
                             </td>
                         </tr>
                     }

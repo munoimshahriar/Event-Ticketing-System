@@ -53,11 +53,58 @@
     </dl>
 </div>
 <div>
-    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">Edit</a>
-    <a asp-action="Index" class="btn btn-secondary">Back to List</a>
-    @if (Model.AvailableTickets > 0)
+    @if (User.IsInRole("Organizer") || User.IsInRole("Admin"))
     {
-        <a asp-controller="Purchases" asp-action="Create" asp-route-eventId="@Model.Id" class="btn btn-success">Buy Tickets</a>
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">Edit</a>
+    }
+    <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+    @if (Model.AvailableTickets > 0 && User.Identity?.IsAuthenticated == true)
+    {
+        <div class="mt-3">
+            <div class="input-group" style="max-width: 300px;">
+                <input type="number" id="ticket-quantity" class="form-control" value="1" min="1" max="@Model.AvailableTickets" />
+                <button class="btn btn-success" id="add-to-cart-btn" data-event-id="@Model.Id">Add to Cart</button>
+            </div>
+            @if (Model.AvailableTickets <= 5)
+            {
+                <p class="text-warning mt-2"><small>⚠️ Only @Model.AvailableTickets tickets left!</small></p>
+            }
+        </div>
+    }
+    else if (Model.AvailableTickets > 0)
+    {
+        <a asp-controller="Account" asp-action="Login" class="btn btn-success">Login to Purchase</a>
     }
 </div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('#add-to-cart-btn').on('click', function () {
+                var eventId = $(this).data('event-id');
+                var quantity = parseInt($('#ticket-quantity').val());
+                
+                $.ajax({
+                    url: '@Url.Action("AddToCart", "Cart")',
+                    type: 'POST',
+                    data: { eventId: eventId, quantity: quantity },
+                    success: function (response) {
+                        if (response.success) {
+                            updateCartBadge(response.cartCount);
+                            showAddToCartSuccess();
+                            if (response.lowStock) {
+                                alert('⚠️ Low stock warning: Only a few tickets left!');
+                            }
+                        } else {
+                            alert(response.message);
+                        }
+                    },
+                    error: function () {
+                        alert('Failed to add to cart. Please try again.');
+                    }
+                });
+            });
+        });
+    </script>
+}
 

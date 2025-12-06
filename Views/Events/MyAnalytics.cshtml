@@ -32,6 +32,34 @@
             </div>
         </div>
     </div>
+
+    <!-- Top 5 Best-Selling Events -->
+    <div class="row">
+        <div class="col-12 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">Top 5 Best-Selling Events</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped" id="topEventsTable">
+                            <thead>
+                                <tr>
+                                    <th>Rank</th>
+                                    <th>Event Title</th>
+                                    <th>Tickets Sold</th>
+                                    <th>Revenue</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -47,6 +75,9 @@
                 
                 // Render Revenue per Month Chart
                 renderRevenueByMonthChart(data.revenueByMonth);
+                
+                // Render Top 5 Best-Selling Events Table
+                renderTopEventsTable(data.topEvents);
             },
             error: function () {
                 console.error('Failed to load analytics data');
@@ -163,6 +194,24 @@
                     }
                 }
             });
+        }
+
+        function renderTopEventsTable(data) {
+            var tbody = $('#topEventsTable tbody');
+            tbody.empty();
+            
+            if (data && data.length > 0) {
+                data.forEach(function(item, index) {
+                    var row = $('<tr>');
+                    row.append($('<td>').text(index + 1));
+                    row.append($('<td>').text(item.eventTitle));
+                    row.append($('<td>').text(item.ticketsSold));
+                    row.append($('<td>').text('$' + parseFloat(item.revenue).toFixed(2)));
+                    tbody.append(row);
+                });
+            } else {
+                tbody.append($('<tr>').append($('<td colspan="4" class="text-center text-muted">').text('No data available')));
+            }
         }
     });
 </script>

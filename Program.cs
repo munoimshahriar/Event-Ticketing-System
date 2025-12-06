@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using VirtualEventTicketing.Data;
 using VirtualEventTicketing.Data.Seeders;
 using VirtualEventTicketing.Models;
+using VirtualEventTicketing.Middleware;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -17,6 +18,15 @@ builder.Host.UseSerilog(); // Tells the app to use Serilog instead of default lo
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+// Add session support for shopping cart
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
 
 // Configure Npgsql to treat unspecified DateTime as UTC
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
@@ -73,6 +83,10 @@ builder.Services.ConfigureApplicationCookie(options =>
 // Add this line to register your custom email sender
 builder.Services.AddTransient<Microsoft.AspNetCore.Identity.UI.Services.IEmailSender, VirtualEventTicketing.Services.EmailSender>();
 
+// Register services
+builder.Services.AddScoped<VirtualEventTicketing.Services.QRCodeService>();
+builder.Services.AddScoped<VirtualEventTicketing.Services.PDFTicketService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -89,10 +103,29 @@ else
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 
+app.UseSession();
+
+// Global exception handling
+app.UseGlobalExceptionHandling();
+
+// 404 handling
+app.Use(async (context, next) =>
+{
+    await next();
+    if (context.Response.StatusCode == 404 && !context.Response.HasStarted)
+    {
+        context.Request.Path = "/Home/Error404";
+        await next();
+    }
+});
+
 app.UseRouting();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Log authorization failures
+app.UseAuthorizationFailureLogging();
 
 app.MapControllerRoute(
     name: "default",
@@ -123,7 +156,7 @@ using (var scope = app.Services.CreateScope())
         // Always check if Identity tables exist (in case migrations are out of sync)
         await EnsureIdentityTablesExistAsync(context);
 
-        // Fix: Ensure OrganizerId column exists (for databases that were created before this column was added)
+        // Ensure OrganizerId column exists (for databases that were created before this column was added)
         try
         {
             await context.Database.ExecuteSqlRawAsync(@"
@@ -199,6 +232,7 @@ async Task EnsureIdentityTablesExistAsync(ApplicationDbContext context)
     catch (Exception ex)
     {
         // Log error but don't throw - let the app continue
+        // Note: Using Serilog static logger here since we don't have ILogger in this scope
         Log.Warning(ex, "Failed to ensure Identity tables exist");
     }
 }

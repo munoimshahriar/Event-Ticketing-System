@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using VirtualEventTicketing.Models;
+using VirtualEventTicketing.Data.Seeders;
 
 namespace VirtualEventTicketing.Controllers
 {
@@ -12,14 +13,18 @@ namespace VirtualEventTicketing.Controllers
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly ILogger<AdminController> _logger;
 
+        private readonly IServiceProvider _serviceProvider;
+
         public AdminController(
             UserManager<ApplicationUser> userManager,
             RoleManager<IdentityRole> roleManager,
-            ILogger<AdminController> logger)
+            ILogger<AdminController> logger,
+            IServiceProvider serviceProvider)
         {
             _userManager = userManager;
             _roleManager = roleManager;
             _logger = logger;
+            _serviceProvider = serviceProvider;
         }
 
         // GET: Admin/Users
@@ -83,6 +88,59 @@ namespace VirtualEventTicketing.Controllers
                 User.Identity?.Name, user.Email);
 
             TempData["Success"] = $"Roles updated successfully for {user.Email}";
+            return RedirectToAction(nameof(Users));
+        }
+
+        // POST: Admin/DeleteAttendeeUsers
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteAttendeeUsers()
+        {
+            try
+            {
+                var deletedCount = await DatabaseSeeder.DeleteAttendeeUsersAsync(_serviceProvider);
+                _logger.LogInformation("Admin {AdminEmail} deleted {Count} attendee user(s)", User.Identity?.Name, deletedCount);
+                TempData["Success"] = $"Successfully deleted {deletedCount} attendee user(s). Admin users were preserved.";
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting attendee users");
+                TempData["Error"] = $"An error occurred while deleting attendee users: {ex.Message}";
+            }
+
+            return RedirectToAction(nameof(Users));
+        }
+
+        // POST: Admin/DeleteUserByEmail
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteUserByEmail(string email)
+        {
+            if (string.IsNullOrEmpty(email))
+            {
+                TempData["Error"] = "Email is required.";
+                return RedirectToAction(nameof(Users));
+            }
+
+            try
+            {
+                var deleted = await DatabaseSeeder.DeleteUserByEmailAsync(_serviceProvider, email);
+                if (deleted)
+                {
+                    _logger.LogInformation("Admin {AdminEmail} deleted user {Email}", User.Identity?.Name, email);
+                    TempData["Success"] = $"User {email} has been deleted successfully.";
+                }
+                else
+                {
+                    TempData["Error"] = $"User {email} could not be deleted. User may not exist or has Admin role.";
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting user {Email}", email);
+                TempData["Error"] = $"An error occurred while deleting user: {ex.Message}";
+            }
+
             return RedirectToAction(nameof(Users));
         }
     }

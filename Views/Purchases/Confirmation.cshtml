@@ -9,6 +9,9 @@
     <p class="lead">Thank you for your purchase. Your tickets have been reserved.</p>
 </div>
 
+<!-- Confetti Canvas -->
+<canvas id="confetti-canvas" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999;"></canvas>
+
 <div class="row justify-content-center">
     <div class="col-md-8">
         <div class="card shadow">
@@ -54,9 +57,90 @@
                     <small>A confirmation email has been sent to @Model.GuestEmail</small>
                 </p>
                 <a asp-controller="Events" asp-action="Index" class="btn btn-primary">Browse More Events</a>
+                <a asp-controller="Dashboard" asp-action="Index" class="btn btn-info">View Dashboard</a>
                 <a asp-controller="Home" asp-action="Index" class="btn btn-secondary">Back to Home</a>
             </div>
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        // Confetti animation
+        (function() {
+            const canvas = document.getElementById('confetti-canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            const confetti = [];
+            const confettiCount = 150;
+            const gravity = 0.5;
+            const terminalVelocity = 5;
+            const drag = 0.075;
+
+            class Confetti {
+                constructor() {
+                    this.x = Math.random() * canvas.width;
+                    this.y = Math.random() * canvas.height - canvas.height;
+                    this.w = Math.random() * 10 + 5;
+                    this.h = Math.random() * 10 + 5;
+                    this.velocity = Math.random() * 3 + 2;
+                    this.fallingSpeed = Math.random() * 3 + 2;
+                    this.color = `hsl(${Math.random() * 360}, 100%, 50%)`;
+                    this.rotation = Math.random() * Math.PI * 2;
+                    this.rotationSpeed = Math.random() * 10;
+                }
+
+                update() {
+                    this.y += this.fallingSpeed;
+                    this.fallingSpeed = Math.min(this.fallingSpeed + gravity, terminalVelocity);
+                    this.fallingSpeed *= (1 - drag);
+                    this.x += Math.sin(this.rotation) * 2;
+                    this.rotation += this.rotationSpeed * 0.01;
+                }
+
+                draw() {
+                    ctx.save();
+                    ctx.translate(this.x, this.y);
+                    ctx.rotate(this.rotation);
+                    ctx.fillStyle = this.color;
+                    ctx.fillRect(-this.w / 2, -this.h / 2, this.w, this.h);
+                    ctx.restore();
+                }
+            }
+
+            function init() {
+                for (let i = 0; i < confettiCount; i++) {
+                    confetti.push(new Confetti());
+                }
+            }
+
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                confetti.forEach((c, i) => {
+                    c.update();
+                    c.draw();
+                    if (c.y > canvas.height) {
+                        confetti.splice(i, 1);
+                        if (confetti.length < confettiCount) {
+                            confetti.push(new Confetti());
+                        }
+                    }
+                });
+                requestAnimationFrame(animate);
+            }
+
+            init();
+            animate();
+
+            setTimeout(() => {
+                confetti.length = 0;
+                setTimeout(() => {
+                    canvas.style.display = 'none';
+                }, 1000);
+            }, 5000);
+        })();
+    </script>
+}
 

@@ -112,8 +112,7 @@ namespace VirtualEventTicketing.Controllers
         [Authorize(Policy = "OrganizerOrAdmin")]
         public async Task<IActionResult> Create([Bind("Title,Date,TicketPrice,AvailableTickets,CategoryId")] Event @event)
         {
-            // FIX: Remove validation for the 'Category' navigation property.
-            // The model expects a full Category object, but the form only provides CategoryId.
+            // Remove validation for navigation properties that aren't in the form
             ModelState.Remove("Category");
             ModelState.Remove("Organizer");
 
@@ -197,8 +196,7 @@ namespace VirtualEventTicketing.Controllers
                 return Forbid();
             }
 
-            // FIX: Remove validation for the 'Category' navigation property
-            // The form submits CategoryId, but the model expects a full Category object.
+            // Remove validation for navigation properties that aren't in the form
             ModelState.Remove("Category");
             ModelState.Remove("Organizer");
 
@@ -375,9 +373,39 @@ namespace VirtualEventTicketing.Controllers
                 .OrderBy(x => x.month)
                 .ToListAsync();
 
+            // Top 5 Best-Selling Events
+            var topEventsQuery = _context.PurchaseItems
+                .Include(pi => pi.Event)
+                .Include(pi => pi.Purchase)
+                .GroupBy(pi => new { pi.EventId, pi.Event.Title })
+                .Select(g => new {
+                    eventId = g.Key.EventId,
+                    eventTitle = g.Key.Title,
+                    ticketsSold = g.Sum(x => x.Quantity),
+                    revenue = g.Sum(x => x.Purchase.TotalCost)
+                })
+                .AsQueryable();
+
+            // Filter by organizer if not admin
+            if (!isAdmin && currentUserId != null)
+            {
+                var organizerEventIds = await _context.Events
+                    .Where(e => e.OrganizerId == currentUserId)
+                    .Select(e => e.Id)
+                    .ToListAsync();
+                
+                topEventsQuery = topEventsQuery.Where(t => organizerEventIds.Contains(t.eventId));
+            }
+
+            var topEvents = await topEventsQuery
+                .OrderByDescending(x => x.ticketsSold)
+                .Take(5)
+                .ToListAsync();
+
             return Json(new { 
                 salesByCategory, 
-                revenueByMonth 
+                revenueByMonth,
+                topEvents
             });
         }
 

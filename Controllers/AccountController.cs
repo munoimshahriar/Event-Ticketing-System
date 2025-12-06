@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Serilog;
 using VirtualEventTicketing.Models;
 using VirtualEventTicketing.Models.ViewModels;
 
@@ -42,7 +41,6 @@ namespace VirtualEventTicketing.Controllers
                 {
                     UserName = model.Email,
                     Email = model.Email,
-                    FullName = model.FullName,
                     PhoneNumber = model.PhoneNumber,
                     DateOfBirth = model.DateOfBirth
                 };
@@ -68,8 +66,7 @@ namespace VirtualEventTicketing.Controllers
                         "Confirm your email",
                         $"Please confirm your account by <a href='{callbackUrl}'>clicking here</a>.");
 
-                    _logger.LogInformation("User {Email} registered successfully. Confirmation email sent.", model.Email);
-                    Log.Information("User {Email} registered successfully from IP {IP}. Confirmation email sent.", 
+                    _logger.LogInformation("User {Email} registered successfully. Confirmation email sent from IP {IP}.", 
                         model.Email, HttpContext.Connection.RemoteIpAddress?.ToString());
 
                     // Don't sign in immediately - require email confirmation
@@ -119,8 +116,7 @@ namespace VirtualEventTicketing.Controllers
 
                     if (result.Succeeded)
                     {
-                        _logger.LogInformation("User {Email} logged in successfully", model.Email);
-                        Log.Information("User {Email} logged in successfully from IP {IP}", 
+                        _logger.LogInformation("User {Email} logged in successfully from IP {IP}", 
                             model.Email, HttpContext.Connection.RemoteIpAddress?.ToString());
 
                         return RedirectToLocal(returnUrl);
@@ -128,15 +124,13 @@ namespace VirtualEventTicketing.Controllers
 
                     if (result.IsLockedOut)
                     {
-                        _logger.LogWarning("User {Email} account locked out", model.Email);
-                        Log.Warning("User {Email} account locked out from IP {IP}", 
+                        _logger.LogWarning("User {Email} account locked out from IP {IP}", 
                             model.Email, HttpContext.Connection.RemoteIpAddress?.ToString());
                         return View("Lockout");
                     }
                 }
 
-                _logger.LogWarning("Failed login attempt for {Email}", model.Email);
-                Log.Warning("Failed login attempt for {Email} from IP {IP}", 
+                _logger.LogWarning("Failed login attempt for {Email} from IP {IP}", 
                     model.Email, HttpContext.Connection.RemoteIpAddress?.ToString());
 
                 ModelState.AddModelError(string.Empty, "Invalid login attempt.");
@@ -153,7 +147,6 @@ namespace VirtualEventTicketing.Controllers
             await _signInManager.SignOutAsync();
             
             _logger.LogInformation("User {UserName} logged out", userName);
-            Log.Information("User {UserName} logged out", userName);
 
             return RedirectToAction("Index", "Home");
         }
@@ -178,7 +171,7 @@ namespace VirtualEventTicketing.Controllers
                         new { userId = user.Id, token = token }, 
                         protocol: Request.Scheme);
 
-                    // SEND THE EMAIL
+                    // Send the email
                     await _emailSender.SendEmailAsync(
                         model.Email,
                         "Reset Password",
@@ -232,7 +225,6 @@ namespace VirtualEventTicketing.Controllers
             if (result.Succeeded)
             {
                 _logger.LogInformation("Password reset successful for {Email}", user.Email);
-                Log.Information("Password reset successful for {Email}", user.Email);
                 return View("ResetPasswordConfirmation");
             }
 
@@ -366,7 +358,6 @@ namespace VirtualEventTicketing.Controllers
 
             if (ModelState.IsValid)
             {
-                user.FullName = model.FullName;
                 user.PhoneNumber = model.PhoneNumber;
                 user.DateOfBirth = model.DateOfBirth;
                 user.ProfilePictureUrl = model.ProfilePictureUrl;
