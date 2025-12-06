@@ -1,0 +1,95 @@
+@model VirtualEventTicketing.Models.ApplicationUser
+
+@{
+    ViewData["Title"] = "My Profile";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <h2 class="mb-4">My Profile</h2>
+        
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-sm-4">
+                        <strong>Full Name:</strong>
+                    </div>
+                    <div class="col-sm-8">
+                        @Model.FullName
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-sm-4">
+                        <strong>Email:</strong>
+                    </div>
+                    <div class="col-sm-8">
+                        @Model.Email
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-sm-4">
+                        <strong>Phone Number:</strong>
+                    </div>
+                    <div class="col-sm-8">
+                        @(Model.PhoneNumber ?? "Not provided")
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-sm-4">
+                        <strong>Date of Birth:</strong>
+                    </div>
+                    <div class="col-sm-8">
+                        @(Model.DateOfBirth?.ToString("MMM dd, yyyy") ?? "Not provided")
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-sm-4">
+                        <strong>Roles:</strong>
+                    </div>
+                    <div class="col-sm-8">
+                        @{
+                            var roles = ViewBag.Roles as IList<string> ?? new List<string>();
+                            if (roles.Any())
+                            {
+                                foreach (var role in roles)
+                                {
+                                    <span class="badge bg-primary me-1">@role</span>
+                                }
+                            }
+                            else
+                            {
+                                <span class="text-muted">No roles assigned</span>
+                            }
+                        }
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-sm-4">
+                        <strong>Email Confirmed:</strong>
+                    </div>
+                    <div class="col-sm-8">
+                        @if (Model.EmailConfirmed)
+                        {
+                            <span class="badge bg-success">Confirmed</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-warning">Not Confirmed</span>
+                        }
+                    </div>
+                </div>
+                
+                <div class="mt-4">
+                    <a asp-action="EditProfile" class="btn btn-primary">Edit Profile</a>
+                    <a asp-action="ChangePassword" class="btn btn-secondary">Change Password</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+

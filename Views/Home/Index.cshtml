@@ -1,0 +1,42 @@
+@{
+    ViewData["Title"] = "Home";
+}
+
+<div class="text-center hero-section">
+    <h1 class="display-4 mb-4">Welcome to Virtual Event Ticketing System</h1>
+    <p class="lead mb-5">Discover and purchase tickets for amazing virtual events including webinars, concerts, workshops, and conferences.</p>
+    
+    <div class="row g-4 mt-4">
+        <div class="col-md-6">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <h3 class="card-title">🎯 Browse Events</h3>
+                    <p class="card-text">Explore our wide selection of virtual events and find something that interests you.</p>
+                    <a asp-controller="Events" asp-action="Index" class="btn btn-primary btn-lg">Browse Events</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <h3 class="card-title">📊 View Dashboard</h3>
+                    <p class="card-text">Check out event statistics and see which events are running low on tickets.</p>
+                    <a asp-controller="Events" asp-action="Dashboard" class="btn btn-success btn-lg">View Dashboard</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .hero-section {
+        padding: 60px 20px;
+    }
+    .card {
+        transition: transform 0.3s;
+    }
+    .card:hover {
+        transform: translateY(-5px);
+    }
+</style>
+

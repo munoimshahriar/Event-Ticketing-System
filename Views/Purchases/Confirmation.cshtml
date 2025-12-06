@@ -1,0 +1,62 @@
+@model VirtualEventTicketing.Models.Purchase
+
+@{
+    ViewData["Title"] = "Purchase Confirmation";
+}
+
+<div class="text-center mb-4">
+    <h1 class="text-success">✓ Purchase Confirmed!</h1>
+    <p class="lead">Thank you for your purchase. Your tickets have been reserved.</p>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow">
+            <div class="card-header bg-success text-white">
+                <h4 class="mb-0">Purchase Summary</h4>
+            </div>
+            <div class="card-body">
+                <dl class="row">
+                    <dt class="col-sm-4">Purchase ID:</dt>
+                    <dd class="col-sm-8"><strong>#@Model.Id</strong></dd>
+
+                    <dt class="col-sm-4">Purchase Date:</dt>
+                    <dd class="col-sm-8">@Model.PurchaseDate.ToString("MMMM dd, yyyy 'at' HH:mm")</dd>
+
+                    <dt class="col-sm-4">Guest Name:</dt>
+                    <dd class="col-sm-8">@Model.GuestName</dd>
+
+                    <dt class="col-sm-4">Guest Email:</dt>
+                    <dd class="col-sm-8">@Model.GuestEmail</dd>
+
+                    <dt class="col-sm-4">Total Cost:</dt>
+                    <dd class="col-sm-8"><h5 class="text-success mb-0">$@Model.TotalCost.ToString("F2")</h5></dd>
+                </dl>
+
+                <hr />
+
+                <h5 class="mb-3">Event Details:</h5>
+                @foreach (var item in Model.PurchaseItems)
+                {
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h6 class="card-title">@item.Event.Title</h6>
+                            <p class="mb-1"><strong>Category:</strong> @item.Event.Category.Name</p>
+                            <p class="mb-1"><strong>Date & Time:</strong> @item.Event.Date.ToString("MMMM dd, yyyy 'at' HH:mm")</p>
+                            <p class="mb-1"><strong>Quantity:</strong> @item.Quantity ticket(s)</p>
+                            <p class="mb-0"><strong>Price per Ticket:</strong> $@item.Event.TicketPrice.ToString("F2")</p>
+                        </div>
+                    </div>
+                }
+            </div>
+            <div class="card-footer text-center">
+                <p class="text-muted mb-2">
+                    <small>A confirmation email has been sent to @Model.GuestEmail</small>
+                </p>
+                <a asp-controller="Events" asp-action="Index" class="btn btn-primary">Browse More Events</a>
+                <a asp-controller="Home" asp-action="Index" class="btn btn-secondary">Back to Home</a>
+            </div>
+        </div>
+    </div>
+</div>
+

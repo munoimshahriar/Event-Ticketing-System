@@ -1,0 +1,120 @@
+@model VirtualEventTicketing.Models.EventFilterViewModel
+
+@{
+    ViewData["Title"] = "Events";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Events</h1>
+    <a asp-action="Create" class="btn btn-primary">Create New Event</a>
+</div>
+
+<!-- Search and Filter Form -->
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">Search & Filter Events</h5>
+    </div>
+    <div class="card-body">
+        <form asp-action="Index" method="get" class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">Search by Title</label>
+                <input type="text" asp-for="SearchTitle" class="form-control" placeholder="Enter event title..." />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Category</label>
+                <select asp-for="CategoryId" class="form-select">
+                    <option value="">All Categories</option>
+                    @foreach (var category in Model.Categories)
+                    {
+                        <option value="@category.Id">@category.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">From Date</label>
+                <input type="date" asp-for="DateFrom" class="form-control" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">To Date</label>
+                <input type="date" asp-for="DateTo" class="form-control" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Availability</label>
+                <select asp-for="Availability" class="form-select">
+                    <option value="all">All Events</option>
+                    <option value="available">Available Only</option>
+                    <option value="soldout">Sold Out</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Sort By</label>
+                <select asp-for="SortBy" class="form-select">
+                    <option value="date">Date</option>
+                    <option value="title">Title</option>
+                    <option value="price">Price</option>
+                </select>
+            </div>
+            <div class="col-md-12">
+                <button type="submit" class="btn btn-primary">Apply Filters</button>
+                <a asp-action="Index" class="btn btn-secondary">Clear Filters</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Events List -->
+<div id="events-container">
+    @await Html.PartialAsync("_EventListPartial", Model.Events)
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            var searchTimeout;
+            
+            // Listen for input on the search box
+            $('#SearchTitle').on('input', function () {
+                var query = $(this).val();
+                
+                // Clear previous timeout
+                clearTimeout(searchTimeout);
+                
+                // Debounce: wait 300ms after user stops typing
+                searchTimeout = setTimeout(function () {
+                    performSearch(query);
+                }, 300);
+            });
+            
+            // Also listen for changes on other filter fields
+            $('#CategoryId, #DateFrom, #DateTo, #Availability, #SortBy').on('change', function () {
+                performSearch($('#SearchTitle').val());
+            });
+            
+            function performSearch(searchTitle) {
+                var filterData = {
+                    SearchTitle: searchTitle || '',
+                    CategoryId: $('#CategoryId').val() || null,
+                    DateFrom: $('#DateFrom').val() || null,
+                    DateTo: $('#DateTo').val() || null,
+                    Availability: $('#Availability').val() || 'all',
+                    SortBy: $('#SortBy').val() || 'date',
+                    isAjax: true
+                };
+                
+                $.ajax({
+                    url: '@Url.Action("Index", "Events")',
+                    type: 'GET',
+                    data: filterData,
+                    success: function (result) {
+                        // Replace the container with the partial view result
+                        $('#events-container').html(result);
+                    },
+                    error: function () {
+                        $('#events-container').html('<div class="alert alert-danger">An error occurred while searching. Please try again.</div>');
+                    }
+                });
+            }
+        });
+    </script>
+}
+

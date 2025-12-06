@@ -1,0 +1,169 @@
+@{
+    ViewData["Title"] = "My Analytics";
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Event Analytics</h1>
+    </div>
+
+    <div class="row">
+        <!-- Ticket Sales by Category -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Ticket Sales by Category</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="salesByCategoryChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Revenue per Month -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">Revenue per Month</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="revenueByMonthChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    $(document).ready(function () {
+        // Fetch analytics data
+        $.ajax({
+            url: '@Url.Action("GetAnalyticsData", "Events")',
+            type: 'GET',
+            success: function (data) {
+                // Render Ticket Sales by Category Chart
+                renderSalesByCategoryChart(data.salesByCategory);
+                
+                // Render Revenue per Month Chart
+                renderRevenueByMonthChart(data.revenueByMonth);
+            },
+            error: function () {
+                console.error('Failed to load analytics data');
+                $('#salesByCategoryChart').parent().html('<div class="alert alert-danger">Failed to load data</div>');
+                $('#revenueByMonthChart').parent().html('<div class="alert alert-danger">Failed to load data</div>');
+            }
+        });
+
+        function renderSalesByCategoryChart(data) {
+            var ctx = document.getElementById('salesByCategoryChart').getContext('2d');
+            
+            var labels = data.map(item => item.category);
+            var values = data.map(item => item.count);
+            
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Tickets Sold',
+                        data: values,
+                        backgroundColor: [
+                            'rgba(54, 162, 235, 0.6)',
+                            'rgba(255, 99, 132, 0.6)',
+                            'rgba(255, 206, 86, 0.6)',
+                            'rgba(75, 192, 192, 0.6)',
+                            'rgba(153, 102, 255, 0.6)',
+                            'rgba(255, 159, 64, 0.6)'
+                        ],
+                        borderColor: [
+                            'rgba(54, 162, 235, 1)',
+                            'rgba(255, 99, 132, 1)',
+                            'rgba(255, 206, 86, 1)',
+                            'rgba(75, 192, 192, 1)',
+                            'rgba(153, 102, 255, 1)',
+                            'rgba(255, 159, 64, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + context.parsed.y + ' tickets';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderRevenueByMonthChart(data) {
+            var ctx = document.getElementById('revenueByMonthChart').getContext('2d');
+            
+            var labels = data.map(item => item.month);
+            var values = data.map(item => parseFloat(item.revenue));
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Revenue ($)',
+                        data: values,
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toFixed(2);
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return 'Revenue: $' + context.parsed.y.toFixed(2);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    });
+</script>
+

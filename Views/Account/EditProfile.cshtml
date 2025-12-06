@@ -1,0 +1,54 @@
+@model VirtualEventTicketing.Models.ApplicationUser
+
+@{
+    ViewData["Title"] = "Edit Profile";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <h2 class="mb-4">Edit Profile</h2>
+        
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success">@TempData["Success"]</div>
+        }
+
+        <form asp-action="EditProfile" method="post">
+            <div asp-validation-summary="All" class="text-danger mb-3"></div>
+            
+            <div class="form-group mb-3">
+                <label asp-for="FullName" class="form-label"></label>
+                <input asp-for="FullName" class="form-control" />
+                <span asp-validation-for="FullName" class="text-danger"></span>
+            </div>
+            
+            <div class="form-group mb-3">
+                <label asp-for="PhoneNumber" class="form-label"></label>
+                <input asp-for="PhoneNumber" class="form-control" />
+                <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+            </div>
+            
+            <div class="form-group mb-3">
+                <label asp-for="DateOfBirth" class="form-label"></label>
+                <input asp-for="DateOfBirth" class="form-control" type="date" />
+                <span asp-validation-for="DateOfBirth" class="text-danger"></span>
+            </div>
+            
+            <div class="form-group mb-3">
+                <label asp-for="ProfilePictureUrl" class="form-label"></label>
+                <input asp-for="ProfilePictureUrl" class="form-control" placeholder="Enter image URL" />
+                <span asp-validation-for="ProfilePictureUrl" class="text-danger"></span>
+            </div>
+            
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+                <a asp-action="Profile" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
+

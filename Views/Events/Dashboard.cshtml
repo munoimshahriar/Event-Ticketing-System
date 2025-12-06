@@ -1,0 +1,100 @@
+@{
+    ViewData["Title"] = "Event Dashboard";
+}
+
+<h1>Event Dashboard</h1>
+
+<div class="row g-4 mt-3">
+    <!-- Total Events Card -->
+    <div class="col-md-4">
+        <div class="card text-center shadow-sm">
+            <div class="card-body">
+                <h2 class="display-4 text-primary">@ViewBag.TotalEvents</h2>
+                <h5 class="card-title">Total Events</h5>
+            </div>
+        </div>
+    </div>
+
+    <!-- Total Categories Card -->
+    <div class="col-md-4">
+        <div class="card text-center shadow-sm">
+            <div class="card-body">
+                <h2 class="display-4 text-success">@ViewBag.TotalCategories</h2>
+                <h5 class="card-title">Total Categories</h5>
+            </div>
+        </div>
+    </div>
+
+    <!-- Low Availability Events Card -->
+    <div class="col-md-4">
+        <div class="card text-center shadow-sm">
+            <div class="card-body">
+                <h2 class="display-4 text-warning">@ViewBag.LowAvailabilityEvents.Count</h2>
+                <h5 class="card-title">Events with Low Availability</h5>
+                <p class="text-muted">Less than 5 tickets remaining</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Low Availability Events List -->
+@if (ViewBag.LowAvailabilityEvents != null && ((List<VirtualEventTicketing.Models.Event>)ViewBag.LowAvailabilityEvents).Any())
+{
+    <div class="mt-5">
+        <h3 class="mb-3">⚠️ Events with Low Ticket Availability</h3>
+        <div class="alert alert-warning">
+            <strong>Attention!</strong> The following events are running low on tickets (less than 5 remaining):
+        </div>
+        <table class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>Event Title</th>
+                    <th>Category</th>
+                    <th>Date</th>
+                    <th>Price</th>
+                    <th>Available Tickets</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var evt in (List<VirtualEventTicketing.Models.Event>)ViewBag.LowAvailabilityEvents)
+                {
+                    <tr>
+                        <td><strong>@evt.Title</strong></td>
+                        <td>@evt.Category.Name</td>
+                        <td>@evt.Date.ToString("MMM dd, yyyy HH:mm")</td>
+                        <td>$@evt.TicketPrice.ToString("F2")</td>
+                        <td>
+                            @if (evt.AvailableTickets == 0)
+                            {
+                                <span class="badge bg-danger">Sold Out</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-warning">@evt.AvailableTickets tickets</span>
+                            }
+                        </td>
+                        <td>
+                            <a asp-action="Details" asp-route-id="@evt.Id" class="btn btn-sm btn-info">View</a>
+                            <a asp-action="Edit" asp-route-id="@evt.Id" class="btn btn-sm btn-warning">Edit</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+else
+{
+    <div class="mt-5">
+        <div class="alert alert-success">
+            <strong>Great!</strong> All events have sufficient ticket availability.
+        </div>
+    </div>
+}
+
+<div class="mt-4">
+    <a asp-action="Index" class="btn btn-primary">View All Events</a>
+    <a asp-controller="Home" asp-action="Index" class="btn btn-secondary">Back to Home</a>
+</div>
+

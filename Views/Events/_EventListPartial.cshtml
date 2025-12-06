@@ -1,0 +1,52 @@
+@model IEnumerable<VirtualEventTicketing.Models.Event>
+
+@if (Model.Any())
+{
+    <div class="row g-4">
+        @foreach (var item in Model)
+        {
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">@item.Title</h5>
+                        <p class="card-text">
+                            <small class="text-muted">Category: @item.Category.Name</small><br />
+                            <strong>Date:</strong> @item.Date.ToString("MMM dd, yyyy HH:mm")<br />
+                            <strong>Price:</strong> $@item.TicketPrice.ToString("F2")<br />
+                            <strong>Available:</strong> 
+                            @if (item.AvailableTickets == 0)
+                            {
+                                <span class="badge bg-danger">Sold Out</span>
+                            }
+                            else if (item.AvailableTickets < 5)
+                            {
+                                <span class="badge bg-warning">@item.AvailableTickets tickets left</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-success">@item.AvailableTickets tickets</span>
+                            }
+                        </p>
+                    </div>
+                    <div class="card-footer bg-transparent">
+                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-info">Details</a>
+                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-warning">Edit</a>
+                        <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-danger">Delete</a>
+                        @if (item.AvailableTickets > 0)
+                        {
+                            <a asp-controller="Purchases" asp-action="Create" asp-route-eventId="@item.Id" class="btn btn-sm btn-success">Buy Tickets</a>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <div class="alert alert-info">
+        <h4>No events found</h4>
+        <p>Try adjusting your search criteria or <a asp-action="Create">create a new event</a>.</p>
+    </div>
+}
+
