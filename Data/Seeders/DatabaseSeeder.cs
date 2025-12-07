@@ -41,6 +41,23 @@ namespace VirtualEventTicketing.Data.Seeders
                 }
             }
 
+            // 2b. Seed Organizer User
+            if (await userManager.FindByEmailAsync("organizer@example.com") == null)
+            {
+                var organizerUser = new ApplicationUser
+                {
+                    UserName = "organizer@example.com",
+                    Email = "organizer@example.com",
+                    EmailConfirmed = true,
+                    DateOfBirth = DateTime.UtcNow
+                };
+                var result = await userManager.CreateAsync(organizerUser, "Organizer@123");
+                if (result.Succeeded)
+                {
+                    await userManager.AddToRoleAsync(organizerUser, "Organizer");
+                }
+            }
+
             // 3. Seed Categories (only if they don't exist)
             if (!context.Categories.Any())
             {

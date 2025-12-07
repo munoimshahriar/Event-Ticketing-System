@@ -108,6 +108,15 @@ namespace VirtualEventTicketing.Controllers
                 var user = await _userManager.FindByEmailAsync(model.Email);
                 if (user != null)
                 {
+                    // Check if email is confirmed
+                    if (!await _userManager.IsEmailConfirmedAsync(user))
+                    {
+                        _logger.LogWarning("Login attempt for unconfirmed email {Email} from IP {IP}", 
+                            model.Email, HttpContext.Connection.RemoteIpAddress?.ToString());
+                        ModelState.AddModelError(string.Empty, "Please confirm your email address before logging in. Check your email for the confirmation link.");
+                        return View(model);
+                    }
+
                     var result = await _signInManager.PasswordSignInAsync(
                         user.UserName!, 
                         model.Password, 

@@ -188,6 +188,30 @@ using (var scope = app.Services.CreateScope())
             var logger = services.GetRequiredService<ILogger<Program>>();
             logger.LogWarning(ex, "Could not add OrganizerId column - it may already exist or database connection failed.");
         }
+
+        // Remove FullName column if it exists (for databases that were created before this column was removed)
+        try
+        {
+            await context.Database.ExecuteSqlRawAsync(@"
+                DO $$
+                BEGIN
+                    IF EXISTS (
+                        SELECT 1 
+                        FROM information_schema.columns 
+                        WHERE table_name = 'AspNetUsers' 
+                        AND column_name = 'FullName'
+                    ) THEN
+                        ALTER TABLE ""AspNetUsers"" 
+                        DROP COLUMN ""FullName"";
+                    END IF;
+                END $$;
+            ");
+        }
+        catch (Exception ex)
+        {
+            var logger = services.GetRequiredService<ILogger<Program>>();
+            logger.LogWarning(ex, "Could not remove FullName column - it may not exist or database connection failed.");
+        }
         
         // Seed database (roles, admin user, categories, events)
         await DatabaseSeeder.SeedAsync(services);
@@ -255,7 +279,6 @@ async Task ApplyIdentityMigrationAsync(ApplicationDbContext context)
         -- Create AspNetUsers table
         CREATE TABLE IF NOT EXISTS ""AspNetUsers"" (
             ""Id"" text NOT NULL,
-            ""FullName"" character varying(200) NOT NULL,
             ""PhoneNumber"" character varying(20),
             ""DateOfBirth"" timestamp without time zone,
             ""ProfilePictureUrl"" character varying(500),
